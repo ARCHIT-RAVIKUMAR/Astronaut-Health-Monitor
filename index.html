@@ -56,7 +56,7 @@ footer{padding:12px 0 26px;font-size:12.5px;color:var(--mute)}
 </head>
 <body>
 <header><div class="wrap">
-  <div><h1>Astronaut Health Monitor</h1><div class="who">Cdr. Elena Marsh · Gateway Transit-2 · Crew medical telemetry</div></div>
+  <div><h1>Astronaut Health Monitor</h1><div class="who">Archit Ravikumar · Mission Specialist · Gateway Transit-2</div></div>
   <div class="met"><div>MISSION ELAPSED TIME</div><b class="mono" id="met">–</b><div id="clock" class="mono"></div></div>
 </div></header>
 
@@ -165,7 +165,7 @@ function sleepBars(){
   return `<svg viewBox="0 0 200 46" preserveAspectRatio="none">${d.map((v,i)=>{const hh=v/9*42;return `<rect x="${i*28+3}" y="${44-hh}" width="22" height="${hh}" fill="${v<4.5?'var(--crit)':v<6?'var(--warn)':'var(--ok)'}" opacity="${i===d.length-1?1:.45}"/>`}).join('')}</svg>`;
 }
 const notes={hr:()=>({rest:'At rest',exercise:'During exercise',sleep:'Asleep'}[S.act]),spo2:()=>'Normal range 95–100%',temp:()=>'Normal range 36.0–37.5 °C',
-  sleep:()=>'Goal 6 h or more · last 7 nights below',ex:()=>'Goal 120 min · '+Math.round(S.ex/120*100)+'% done'};
+  sleep:()=>'Goal 6 h or more · last 7 nights',ex:()=>'Goal 120 min · '+Math.round(S.ex/120*100)+'% done'};
 
 function card(k){
   const p=P[k],lv=S.L[k];
@@ -175,7 +175,7 @@ function card(k){
 }
 function draw(){
   $('met').textContent=metStr(min);
-  $('clock').textContent='Last reading '+new Date().toISOString().slice(11,19)+' UTC';
+  $('clock').textContent='Live · updated '+new Date().toISOString().slice(11,19)+' UTC';
   const L=S.L,top=Math.max(...Object.values(L)),o=$('overall');
   o.textContent=NAMES[top];o.className='pill s'+top;
   $('grid').innerHTML=['hr','spo2','temp','sleep','ex'].map(card).join('')+
