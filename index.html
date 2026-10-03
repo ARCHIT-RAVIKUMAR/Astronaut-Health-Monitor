@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Astronaut Health Monitor</title>
+<style>
+:root{--bg:#eceff1;--card:#fff;--ink:#1d2327;--mute:#5f6b73;--line:#d5dade;--ok:#1f7a4d;--warn:#a8620a;--crit:#b3261e;--okbg:#e6f3ec;--warnbg:#fbf0dd;--critbg:#fbe7e5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:0 18px}
+header{background:#1f2a33;color:#e8ecef;padding:14px 0}
+header .wrap{display:flex;flex-wrap:wrap;gap:10px 28px;justify-content:space-between;align-items:center}
+h1{font-size:17px;margin:0;font-weight:650}
+.who{font-size:13px;color:#a9b4bb}
+.met{text-align:right}
+.met b{font-size:22px;font-weight:600;letter-spacing:.02em}
+.met div{font-size:12px;color:#a9b4bb}
+main{padding:18px 0 10px}
+#banner{display:none;background:var(--critbg);border:1px solid var(--crit);border-left-width:6px;color:#7d1a14;border-radius:4px;padding:10px 14px;margin-bottom:14px;font-weight:600}
+#banner span{display:block;font-weight:400;font-size:14px}
+.top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.overall{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--mute);text-transform:uppercase;letter-spacing:.07em}
+.pill{font-size:13px;font-weight:700;letter-spacing:.06em;padding:4px 12px;border-radius:3px;border:1px solid}
+.s0{color:var(--ok);background:var(--okbg);border-color:var(--ok)}
+.s1{color:var(--warn);background:var(--warnbg);border-color:var(--warn)}
+.s2{color:var(--crit);background:var(--critbg);border-color:var(--crit)}
+.tests{font-size:12.5px;color:var(--mute)}
+button{font:inherit;font-size:12.5px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:3px;padding:4px 9px;cursor:pointer;margin-left:4px}
+button:hover{border-color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:4px;padding:12px 14px;min-width:0}
+.card.c1{border-left-color:var(--warn)}.card.c2{border-left-color:var(--crit)}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.07em}
+.chip{font-size:11px;font-weight:700;padding:1px 7px;border-radius:3px;border:1px solid;letter-spacing:.05em}
+.val{font-size:34px;font-weight:600;line-height:1.15;margin:4px 0 0}
+.val small{font-size:14px;font-weight:400;color:var(--mute);margin-left:4px}
+.note{font-size:12.5px;color:var(--mute);margin-top:2px}
+svg{width:100%;height:46px;display:block;margin-top:6px}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-top:10px;overflow:hidden}
+.bar i{display:block;height:100%}
+.log{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px 14px;min-width:0}
+.log ul{list-style:none;margin:6px 0 0;padding:0;max-height:178px;overflow:auto;font-size:13px}
+.log li{padding:5px 0;border-top:1px solid var(--line)}
+.log .t{color:var(--mute);margin-right:6px;font-size:12px}
+.ref{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px 14px;overflow-x:auto}
+.ref h2{font-size:14px;margin:0 0 6px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:5px 10px 5px 0;border-top:1px solid var(--line)}
+th{font-weight:600;color:var(--mute);border-top:0}
+footer{padding:12px 0 26px;font-size:12.5px;color:var(--mute)}
+@media(max-width:860px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.met{text-align:left}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div><h1>Astronaut Health Monitor</h1><div class="who">Cdr. Elena Marsh · Gateway Transit-2 · Crew medical telemetry</div></div>
+  <div class="met"><div>MISSION ELAPSED TIME</div><b class="mono" id="met">–</b><div id="clock" class="mono"></div></div>
+</div></header>
+
+<main><div class="wrap">
+  <div id="banner"></div>
+  <div class="top">
+    <div class="overall">Overall status <span class="pill s0" id="overall">NORMAL</span></div>
+    <div class="tests">Demo events:
+      <button id="t1">Low SpO₂</button><button id="t2">High heart rate</button><button id="t3">Fever</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <div class="ref">
+    <h2>Alert thresholds</h2>
+    <table>
+      <tr><th>Parameter</th><th>Normal</th><th>Warning</th><th>Critical</th></tr>
+      <tr><td>Heart rate (rest)</td><td>50–100 bpm</td><td>100–120 or 40–50</td><td>&gt; 120 or &lt; 40</td></tr>
+      <tr><td>Heart rate (exercise)</td><td>up to 150 bpm</td><td>150–170</td><td>&gt; 170</td></tr>
+      <tr><td>Oxygen (SpO₂)</td><td>95% or higher</td><td>90–94%</td><td>&lt; 90%</td></tr>
+      <tr><td>Body temperature</td><td>36.0–37.5 °C</td><td>37.6–38.4 or 35.5–35.9</td><td>≥ 38.5 or &lt; 35.5</td></tr>
+      <tr><td>Sleep (last night)</td><td>6 h or more</td><td>4.5–6 h</td><td>&lt; 4.5 h</td></tr>
+      <tr><td>Exercise (daily goal 120 min)</td><td>On track</td><td>&lt; 60 min after 20:00</td><td>–</td></tr>
+      <tr><td>Combined rule</td><td colspan="3">SpO₂ below 94% together with a resting heart rate above 100 bpm raises a warning (possible respiratory distress)</td></tr>
+    </table>
+  </div>
+</div></main>
+<footer><div class="wrap">All readings are randomly generated for this demo and are not real medical data. One update every 2 seconds represents 5 minutes of mission time.</div></footer>
+
+<script>
+const $=id=>document.getElementById(id), rnd=(a,b)=>a+Math.random()*(b-a), N=36;
+const NAMES=['NORMAL','WARNING','CRITICAL'];
+let min=46*1440+390; // mission day 47, 06:30
+const S={hr:68,spo2:98,temp:36.7,sleep:6.8,ex:0,act:'rest',dipLeft:0,dip:0,hrTicks:0,tTicks:0,
+  hist:{hr:[],spo2:[],temp:[],sleep:[6.9,7.4,6.1,5.8,7.0,6.5,6.8]}};
+const prev={};let log=[];
+
+const P={
+ hr:{label:'Heart rate',unit:'bpm',lo:40,hi:180,band:[50,100],fmt:v=>Math.round(v)},
+ spo2:{label:'Oxygen saturation',unit:'%',lo:85,hi:100,band:[95,100],fmt:v=>Math.round(v)},
+ temp:{label:'Body temperature',unit:'°C',lo:35,hi:39.5,band:[36,37.5],fmt:v=>v.toFixed(1)},
+ sleep:{label:'Sleep, last night',unit:'h',fmt:v=>v.toFixed(1)},
+ ex:{label:'Exercise today',unit:'min',fmt:v=>Math.round(v)}
+};
+function level(k,v){
+  const h=(min%1440)/60;
+  switch(k){
+    case 'hr': if(S.act==='exercise')return v>170?2:v>150?1:0; return(v>120||v<40)?2:(v>100||v<50)?1:0;
+    case 'spo2': return v<90?2:v<95?1:0;
+    case 'temp': return(v>=38.5||v<35.5)?2:(v>37.5||v<36)?1:0;
+    case 'sleep': return v<4.5?2:v<6?1:0;
+    case 'ex': return(h>=20&&v<60)?1:0;
+  }
+}
+function msg(k,l,v){
+  const t={hr:`Heart rate ${Math.round(v)} bpm`,spo2:`Oxygen saturation ${Math.round(v)}%`,temp:`Body temperature ${v.toFixed?v.toFixed(1):v} °C`,sleep:`Sleep only ${(+v).toFixed(1)} h`,ex:`Exercise only ${Math.round(v)} min today`,combo:`SpO₂ ${Math.round(S.spo2)}% with heart rate ${Math.round(S.hr)} bpm at rest, possible respiratory distress`};
+  return t[k]+(k==='spo2'&&l===2?' (below 90%)':'');
+}
+function metStr(m){const d=Math.floor(m/1440)+1,r=m%1440;return `Day ${d} · ${String(Math.floor(r/60)).padStart(2,'0')}:${String(r%60).padStart(2,'0')}`}
+const act=h=>(h>=22.5||h<6.5)?'sleep':((h>=10&&h<11)||(h>=17.5&&h<18.5))?'exercise':'rest';
+
+function step(){
+  const old=Math.floor(min/1440);min+=5;const h=(min%1440)/60;
+  if(Math.floor(min/1440)!==old){S.ex=0;S.sleep=+rnd(4.2,8.2).toFixed(1);S.hist.sleep.push(S.sleep);S.hist.sleep.shift()}
+  S.act=act(h);
+  if(S.act==='exercise')S.ex+=5;
+  // heart rate drifts toward a target that depends on activity
+  let tg=S.act==='exercise'?rnd(118,142):S.act==='sleep'?rnd(52,60):rnd(62,76);
+  if(S.hrTicks>0){tg+=55;S.hrTicks--}
+  S.hr+=(tg-S.hr)*.5+rnd(-3,3);
+  // oxygen: stable around 98 with occasional short dips
+  if(S.dipLeft<=0&&Math.random()<.025){S.dipLeft=Math.round(rnd(3,5));S.dip=Math.random()<.2?rnd(9,12):rnd(4,7)}
+  S.spo2=(S.dipLeft>0?98-S.dip*(S.dipLeft>1?1:.5):98)+rnd(-.8,.8);
+  if(S.dipLeft>0)S.dipLeft--;
+  S.spo2=Math.min(100,S.spo2);
+  // temperature
+  let tt=36.8+(S.act==='exercise'?.5:S.act==='sleep'?-.3:0);
+  if(S.tTicks>0){tt+=1.9;S.tTicks--}
+  S.temp+=(tt-S.temp)*.4+rnd(-.06,.06);
+  for(const k of ['hr','spo2','temp']){S.hist[k].push(S[k]);if(S.hist[k].length>N)S.hist[k].shift()}
+  evaluate();draw();
+}
+
+function evaluate(){
+  const L={};
+  for(const k of ['hr','spo2','temp','sleep','ex'])L[k]=level(k,S[k]);
+  L.combo=(S.spo2<94&&S.hr>100&&S.act!=='exercise')?1:0;
+  S.L=L;
+  for(const k in L){
+    const p=prev[k]||0;
+    if(L[k]>p)log.unshift({m:metStr(min),l:L[k],txt:msg(k,L[k],S[k])});
+    else if(L[k]===0&&p>0)log.unshift({m:metStr(min),l:0,txt:(P[k]?P[k].label:'Combined rule')+' back to normal'});
+    prev[k]=L[k];
+  }
+  log=log.slice(0,30);
+}
+
+function spark(k,lv){
+  const p=P[k],d=S.hist[k],w=200,h=46,X=i=>i/(N-1)*w,Y=v=>h-2-(Math.min(Math.max(v,p.lo),p.hi)-p.lo)/(p.hi-p.lo)*(h-4);
+  const col=['var(--ok)','var(--warn)','var(--crit)'][lv],off=N-d.length;
+  const pts=d.map((v,i)=>X(i+off).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><rect x="0" y="${Y(p.band[1])}" width="${w}" height="${Y(p.band[0])-Y(p.band[1])}" fill="var(--okbg)"/><polyline fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" vector-effect="non-scaling-stroke" points="${pts}"/></svg>`;
+}
+function sleepBars(){
+  const d=S.hist.sleep;
+  return `<svg viewBox="0 0 200 46" preserveAspectRatio="none">${d.map((v,i)=>{const hh=v/9*42;return `<rect x="${i*28+3}" y="${44-hh}" width="22" height="${hh}" fill="${v<4.5?'var(--crit)':v<6?'var(--warn)':'var(--ok)'}" opacity="${i===d.length-1?1:.45}"/>`}).join('')}</svg>`;
+}
+const notes={hr:()=>({rest:'At rest',exercise:'During exercise',sleep:'Asleep'}[S.act]),spo2:()=>'Normal range 95–100%',temp:()=>'Normal range 36.0–37.5 °C',
+  sleep:()=>'Goal 6 h or more · last 7 nights below',ex:()=>'Goal 120 min · '+Math.round(S.ex/120*100)+'% done'};
+
+function card(k){
+  const p=P[k],lv=S.L[k];
+  const extra=k==='ex'?`<div class="bar"><i style="width:${Math.min(100,S.ex/120*100)}%;background:${lv?'var(--warn)':'var(--ok)'}"></i></div>`:k==='sleep'?sleepBars():spark(k,lv);
+  return `<div class="card c${lv}"><div class="row"><span>${p.label}</span><span class="chip s${lv}">${NAMES[lv]}</span></div>
+  <div class="val mono">${p.fmt(S[k])}<small>${p.unit}</small></div><div class="note">${notes[k]()}</div>${extra}</div>`;
+}
+function draw(){
+  $('met').textContent=metStr(min);
+  $('clock').textContent='Last reading '+new Date().toISOString().slice(11,19)+' UTC';
+  const L=S.L,top=Math.max(...Object.values(L)),o=$('overall');
+  o.textContent=NAMES[top];o.className='pill s'+top;
+  $('grid').innerHTML=['hr','spo2','temp','sleep','ex'].map(card).join('')+
+   `<div class="log"><div class="row"><span>Alert log</span><span>${log.length} events</span></div><ul>${
+     log.length?log.map(e=>`<li><span class="t mono">${e.m}</span><b style="color:var(--${['ok','warn','crit'][e.l]})">${['CLEARED','WARNING','CRITICAL'][e.l]}</b> ${e.txt}</li>`).join(''):'<li>No alerts since monitoring started.</li>'
+   }</ul></div>`;
+  const crit=Object.keys(L).filter(k=>L[k]===2),b=$('banner');
+  if(crit.length){b.style.display='block';b.innerHTML='CRITICAL ALERT'+crit.map(k=>`<span>${msg(k,2,S[k])}</span>`).join('')}
+  else b.style.display='none';
+}
+$('t1').onclick=()=>{S.dipLeft=6;S.dip=11};
+$('t2').onclick=()=>{S.hrTicks=6};
+$('t3').onclick=()=>{S.tTicks=6};
+for(let i=0;i<N;i++){S.hist.hr.push(rnd(60,75));S.hist.spo2.push(98+rnd(-.8,.8));S.hist.temp.push(36.7+rnd(-.1,.1))}
+S.hr=S.hist.hr[N-1];S.spo2=S.hist.spo2[N-1];S.temp=S.hist.temp[N-1];
+evaluate();draw();setInterval(step,2000);
+</script>
+</body>
+</html>
